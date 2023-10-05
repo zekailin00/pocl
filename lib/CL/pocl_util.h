@@ -29,14 +29,15 @@
 #include <string.h>
 #include "pocl_cl.h"
 
-#if defined(BUILD_NEWLIB)
+// Notes: riscv compiler does not support #elif with no expression
+#if (defined(BUILD_NEWLIB) || defined(BUILD_VORTEX_NEWLIB))
   // do nothing
 #elif defined(HAVE_POSIX_MEMALIGN) \
  || defined(__ANDROID__)         \
  || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
   #define HAVE_ALIGNED_ALLOC
-#elif
-  #error aligned malloc unavailable
+// #elif
+//   #error aligned malloc unavailable
 #endif
 
 
@@ -48,7 +49,7 @@
 extern "C" {
 #endif
 
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
 #if defined(__GNUC__) || defined(__clang__)
 /* These return the new value. */
 /* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */

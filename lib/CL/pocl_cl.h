@@ -233,6 +233,15 @@ typedef int pocl_lock_t;
 #  define POsymAlways(name)
 #  define POdeclsym(name)
 
+
+#elif defined(BUILD_VORTEX_NEWLIB)
+/* Visual Studio does not support this magic either */
+#  define POname(name) name
+#  define POdeclsym(name)
+#  define POsym(name)
+#  define POsymAlways(name)
+#  define POdeclsym(name)
+
 #else
 /* Symbol aliases are supported */
 

@@ -12,11 +12,13 @@
  
 ## Building RiscV GNU Toolchain (gcc, binutils, etc..)
 
+### added floating point
+
 - git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
 - cd riscv-gnu-toolchain
 - mkdir build
 - cd build
-- export RISCV_TOOLCHAIN_PATH=/opt/riscv-gnu-toolchain
+- export RISCV_TOOLCHAIN_PATH=/opt/riscv-gnu-toolchain # different
 - ../configure --prefix=$RISCV_TOOLCHAIN_PATH --with-arch=rv32imf --with-abi=ilp32f
 - make -j`nproc` && make -j`nproc` build-qemu
 
@@ -26,7 +28,31 @@
 - cd llvm
 - mkdir build
 - cd build
-- export LLVM_VORTEX=/opt/llvm-vortex
+- export LLVM_VORTEX=$PWD/../llvm_drop
+- export RISCV_TOOLCHAIN_PATH=$PWD/../../riscv-gnu-toolchain/drops
+
+# failed: Only set deps for an ExternalProject if the type is executable or library
+https://reviews.llvm.org/D77284?id=
+
+This has always been the case back to at least 3.12 (furthest I
+checked) but this is causing a new failure in cmake 3.17 while
+evaluating ExternalProjectAdd.
+
+```
+
+CMake Error at /usr/share/cmake-3.22/Modules/ExternalProject.cmake:2406:EVAL:2 (add_custom_command):
+  Error evaluating generator expression:
+
+    $<TARGET_FILE:llvm-ranlib>
+
+  Target "llvm-ranlib" is not an executable or library.
+Call Stack (most recent call first):
+  /usr/share/cmake-3.22/Modules/ExternalProject.cmake:2406 (cmake_language)
+  cmake/modules/LLVMExternalProjectUtils.cmake:259 (ExternalProject_Add_Step)
+  runtimes/CMakeLists.txt:377 (llvm_ExternalProject_Add)
+  runtimes/CMakeLists.txt:502 (runtime_default_target)
+```
+
 - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DBUILD_SHARED_LIBS=True -DCMAKE_INSTALL_PREFIX=$LLVM_VORTEX -DLLVM_BUILD_TESTS=False -DDEFAULT_SYSROOT=$RISCV_TOOLCHAIN_PATH/riscv32-unknown-elf -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
 #- cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DBUILD_SHARED_LIBS=True -DCMAKE_INSTALL_PREFIX=$LLVM_VORTEX -DLLVM_BUILD_TESTS=False -DDEFAULT_SYSROOT=$RISCV_TOOLCHAIN_PATH/riscv32-unknown-elf -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
 - cmake --build . --target install
@@ -62,8 +88,33 @@
 
 - mkdir build_rt
 - cd build_rt
-- export POCL_RT_PATH=/opt/pocl/runtime
-- export VORTEX_DRIVER_INC=~/dev/vortex_live/driver/include
-- export VORTEX_DRIVER_LIB=~/dev/vortex_live/driver/stub/libvortex.so
+- export POCL_RT_PATH=$PWD/../pocl_rt_drops
+- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/pocl/lib/CL/devices/vortex/driver/
+- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/pocl/lib/CL/devices/vortex/driver/libvortex.so
 - cmake -G Ninja -DHOST_DEVICE_BUILD_HASH=riscv32-unknown-unknown-elf -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DVORTEX_DRIVER_INC=$VORTEX_DRIVER_INC -DVORTEX_DRIVER_LIB=$VORTEX_DRIVER_LIB -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
+- cmake --build . --target install
+
+
+
+----------------
+cross compilation:
+
+build pk
+export PATH=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops/bin:$PATH
+CC=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops/bin/riscv32-unknown-elf-gcc CXX=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops/bin/riscv32-unknown-elf-g++ ../configure  --host=riscv32-unknown-elf --with-arch=rv32gc --prefix=../drops
+
+pk path
+/home/zekailin00/Desktop/riscv-pk/drops/riscv32-unknown-elf/bin
+
+
+0x80000000 - 0xffffffff
+all memory
+
+- mkdir build_rt_spike
+- cd build_rt_spike
+- export RISCV_TOOLCHAIN_PATH=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops
+- export POCL_RT_PATH=$PWD/../pocl_rt_spike_drops
+- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/driver/stub/include
+- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/driver/stub/libvortex.a
+- cmake -G Ninja -DENABLE_HOST_CPU_DEVICES=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE=../RISCV_vortex.cmake -DHOST_DEVICE_BUILD_HASH=riscv32-unknown-unknown-elf -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DVORTEX_DRIVER_INC=$VORTEX_DRIVER_INC -DVORTEX_DRIVER_LIB=$VORTEX_DRIVER_LIB -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
 - cmake --build . --target install

@@ -276,7 +276,8 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
   // add storage for position pointer
   uint32_t print_buf_dev_size = PRINT_BUFFER_SIZE + sizeof(uint32_t);
 
-  size_t vx_print_buf_d;
+  uint64_t vx_print_buf_d;
+  // error: cannot convert 'size_t*' {aka 'unsigned int*'} to 'uint64_t*' {aka 'long long unsigned int*'}
   err = vx_mem_alloc(vx_device, print_buf_dev_size, &vx_print_buf_d);
   if (err != 0) {
     vx_dev_close(vx_device);
@@ -355,7 +356,8 @@ pocl_vortex_malloc(cl_device_id device, cl_mem_flags flags, size_t size,
   if (err != 0)
     return nullptr;
 
-  size_t dev_mem_addr;
+  uint64_t dev_mem_addr;
+  // cannot convert 'size_t*' {aka 'unsigned int*'} to 'uint64_t*' {aka 'long long unsigned int*'}
   err = vx_mem_alloc(d->vx_device, size, &dev_mem_addr);
   if (err != 0) {
     vx_buf_free(staging_buf);
@@ -371,7 +373,8 @@ pocl_vortex_malloc(cl_device_id device, cl_mem_flags flags, size_t size,
       return nullptr;
     }
   }
-
+  //???/home/zekailin00/Desktop/vortex/pocl/lib/CL/devices/vortex/vortex.cc:367: undefined reference to `operator new(unsigned int)'
+  // vx_buffer_data_t* buf_data = (vx_buffer_data_t* ) malloc(sizeof(vx_buffer_data_t));
   auto buf_data = new vx_buffer_data_t();
   buf_data->vx_device    = d->vx_device;
   buf_data->staging_buf  = staging_buf;

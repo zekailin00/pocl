@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
 #include <dirent.h>
 #endif
 #else
@@ -37,7 +37,7 @@ int
 pocl_rm_rf(const char* path) 
 {
   int error = -1;
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
   DIR *d = opendir(path);
   size_t path_len = strlen(path);
     
@@ -81,7 +81,7 @@ pocl_rm_rf(const char* path)
 int
 pocl_mkdir_p (const char* path)
 {
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
   int error;
   int errno_tmp;
   error = mkdir (path, S_IRWXU);
@@ -114,7 +114,7 @@ pocl_remove(const char* path)
 int
 pocl_exists(const char* path) 
 {
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
   return !access(path, R_OK);
 #else 
   return 0;
@@ -318,6 +318,8 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
 
 #elif defined(BUILD_NEWLIB)
   return 0;
+#elif defined(BUILD_VORTEX_NEWLIB)
+  return 0;
 #else
 #error mkostemps() / mkstemps() both unavailable
 #endif
@@ -335,6 +337,8 @@ pocl_mk_tempdir (char *output, const char *prefix)
   strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
   return (mkdtemp (output) == NULL);
 #elif defined(BUILD_NEWLIB)
+  return 0;
+#elif defined(BUILD_VORTEX_NEWLIB)
   return 0;
 #else
 #error mkdtemp() not available

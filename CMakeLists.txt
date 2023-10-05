@@ -60,9 +60,11 @@ if(UNIX)
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
     check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
-    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    # set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    # pocl newlib runtime failed with this enabled
     if (HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
-      set(FORBIT_IMPLICIT_FUNCTIONS ${FORBIT_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
+      # does not work for RISCV vortex cross compilation
+      # set(FORBIT_IMPLICIT_FUNCTIONS ${FORBIT_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
     endif()
     add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
@@ -800,8 +802,12 @@ include_directories("include")
 ######################################################################################
 
 set(HAVE_LIBDL OFF CACHE BOOL "dlopen" FORCE)
+message("Cross compiling? ${CMAKE_CROSSCOMPILING}")
+message("Compiling poclcc? ${POCLCC}")
+# poclcc for riscv newlib target should not be cross compiling?
+# but newlib property forces cross compiling: line 204
 
-if (ENABLE_NEWLIB AND CMAKE_CROSSCOMPILING)
+if (ENABLE_NEWLIB AND CMAKE_CROSSCOMPILING AND NOT POCLCC)
   message(STATUS "Using statically linked kernels for Newlib CPU platforms")
 elseif(WIN32)
   message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
@@ -1268,6 +1274,7 @@ if (ENABLE_NEWLIB)
 endif()
 
 if (ENABLE_VORTEX)
+  add_compile_definitions(BUILD_VORTEX_NEWLIB)
   set(OCL_DRIVERS "${OCL_DRIVERS} vortex")
   set(OCL_TARGETS "${OCL_TARGETS} vortex")
   set(ENABLE_PTHREAD OFF CACHE INTERNAL "Disable Pthread for Vortex targets")

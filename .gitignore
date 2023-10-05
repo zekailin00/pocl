@@ -1,6 +1,12 @@
 build*/*
 *~
 
+drops_riscv_cc/**
+drops_riscv_rt/**
+pocl_rt_drops/**
+pocl_rt_spike_drops/**
+**.so
+
 **/.deps
 **/.libs
 *.bc

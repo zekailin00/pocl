@@ -23,11 +23,13 @@
 
 ## Building LLVM 10.x for RiscV
 
+Added `#include <limits>` in [llvm repo]/llvm/utils/benchmark/src/benchmark_register.h
+
 - git clone -b release/10.x https://github.com/llvm/llvm-project.git llvm
 - cd llvm
 - mkdir build
 - cd build
-- cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DBUILD_SHARED_LIBS=True -DCMAKE_INSTALL_PREFIX=$RISCV_TOOLCHAIN_PATH -DLLVM_BUILD_TESTS=False -DDEFAULT_SYSROOT=$RISCV_TOOLCHAIN_PATH/riscv32-unknown-elf -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
+- cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DBUILD_SHARED_LIBS=True -DCMAKE_CXX_STANDARD=14 -DCMAKE_INSTALL_PREFIX=$RISCV_TOOLCHAIN_PATH -DLLVM_BUILD_TESTS=False -DDEFAULT_SYSROOT=$RISCV_TOOLCHAIN_PATH/riscv32-unknown-elf -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
 - cmake --build . --target install
 
 ## Building LLVM 10.x for x86
@@ -41,8 +43,8 @@
 ## Sanity test your new RISC-V LLVM
 
 - echo -e '#include <stdio.h>\n int main(void) { printf("Hello world!\\n"); return 0; }' > hello.c
-- $RISCV_TOOLCHAIN_PATH/clang hello.c
-- qemu-riscv32 hello
+- $RISCV_TOOLCHAIN_PATH/bin/clang hello.c
+- $RISCV_TOOLCHAIN_PATH/bin/qemu-riscv32 a.out
 
 ## build pocl for RISCV
 
@@ -52,7 +54,17 @@
 - cd build
 - export POCL_CC_PATH=$PWD/../drops_riscv_cc
 - export POCL_RT_PATH=$PWD/../drops_riscv_rt
-- poclcc: cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DWITH_LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=32 -DNEWLIB_DEVICE_MARCH=rv32im -DLLC_HOST_CPU= -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF ..
+- export LLVM_PREFIX=$LLVM_X86_PATH
+
+- # poclcc failed because no dlopen for cross-compiling newlib target, added -DPOCLCC=ON and modify cmake script so compiling poclcc is not cross-compilation
+- # might need to rm -rf build to clean up cmake cache before running cmake
+
+
+- poclcc: cmake -G Ninja -DPOCLCC=ON -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DWITH_LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=32 -DNEWLIB_DEVICE_MARCH=rv32im -DLLC_HOST_CPU= -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF ..
+- cmake --build . --target install # call build after every cmake
+
+- # disable -Werror=implicit-function-declaration
+- # error: Must have fork() or vfork() system calls for HSA; since we don't use it, just comment the function implementation out
 - runtime: cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DBUILD_SHARED_LIBS=OFF -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=32 -DNEWLIB_DEVICE_MARCH=rv32im -DHOST_DEVICE_BUILD_HASH=newlib-riscv32-unknown-elf -DCMAKE_TOOLCHAIN_FILE=../RISCV_newlib.cmake -DENABLE_TRACING=OFF -DBUILD_TESTS=OFF -DENABLE_ICD=OFF -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF ..
 - cmake --build . --target install
 
@@ -61,6 +73,11 @@
 - export POCL_CC_PATH=$PWD/../drops_x86_cc
 - export POCL_RT_PATH=$PWD/../drops_x896_rt
 - install linux dependencies: sudo apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
-- poclcc: cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=64 -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF ..
+
+- cd ..
+- rm -rf build
+- cd 
+
+- poclcc: cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=64 -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF -DWITH_LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config ..
 - runtime: cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DBUILD_SHARED_LIBS=OFF -DENABLE_NEWLIB=ON -DHOST_DEVICE_ADDRESS_BITS=64 -DBUILD_TESTS=OFF -DHOST_DEVICE_BUILD_HASH=basic-x86_64-unknown-linux-gnu-skylake -DPOCL_DEBUG_MESSAGES=ON -DDEFAULT_ENABLE_ICD=OFF ..
 - cmake --build . --target install

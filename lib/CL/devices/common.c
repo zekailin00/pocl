@@ -1153,7 +1153,7 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
       dlclose (ci->dlhandle);
       dl_error = dlerror ();
 #endif

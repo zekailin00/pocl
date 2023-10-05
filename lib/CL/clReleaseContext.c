@@ -93,7 +93,7 @@ pocl_check_uninit_devices ()
   if (!do_uninit)
     return;
 
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
   usleep (100000);
 #endif
 

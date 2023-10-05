@@ -30,7 +30,8 @@
 
 
 #ifndef _MSC_VER
-#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+// newlib does not support dirent
+#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
 #include <dirent.h>
 #endif
 #include <sys/resource.h>
@@ -1110,26 +1111,27 @@ pocl_run_command (char *const *args)
 #elif defined(HAVE_FORK)
   pid_t p = fork ();
 #else
-#error Must have fork() or vfork() system calls for HSA
+// #error Must have fork() or vfork() system calls for HSA
 #endif
-  if (p == 0)
-    {
-      return execv (args[0], args);
-    }
-  else
-    {
-      if (p < 0)
-        return EXIT_FAILURE;
-      int status;
-      if (waitpid (p, &status, 0) < 0)
-        POCL_ABORT ("pocl: waitpid() failed.\n");
-      if (WIFEXITED (status))
-        return WEXITSTATUS (status);
-      else if (WIFSIGNALED (status))
-        return WTERMSIG (status);
-      else
-        return EXIT_FAILURE;
-    }
+//   if (p == 0)
+//     {
+//       return execv (args[0], args);
+//     }
+//   else
+//     {
+//       if (p < 0)
+//         return EXIT_FAILURE;
+//       int status;
+//       if (waitpid (p, &status, 0) < 0)
+//         POCL_ABORT ("pocl: waitpid() failed.\n");
+//       if (WIFEXITED (status))
+//         return WEXITSTATUS (status);
+//       else if (WIFSIGNALED (status))
+//         return WTERMSIG (status);
+//       else
+//         return EXIT_FAILURE;
+//     }
+  return 0;
 }
 
 // event locked
