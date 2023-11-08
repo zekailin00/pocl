@@ -81,7 +81,7 @@ pocl_rm_rf(const char* path)
 int
 pocl_mkdir_p (const char* path)
 {
-#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
+#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
   int error;
   int errno_tmp;
   error = mkdir (path, S_IRWXU);

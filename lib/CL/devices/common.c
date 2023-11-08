@@ -660,6 +660,7 @@ pocl_exec_command (_cl_command_node * volatile node)
   cl_event event = node->event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
+  printf("[GPU Debug]Command node->type: %d\n", node->type); fflush(stdout);
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -936,7 +937,9 @@ pocl_exec_command (_cl_command_node * volatile node)
       pocl_update_event_running (event);
       assert (event == node->event);
       assert (dev->ops->run);
+      printf("[GPU Debug] CL_COMMAND_NDRANGE_KERNEL\n"); fflush(stdout);
       dev->ops->run (dev->data, node);
+      printf("[GPU Debug] CL_COMMAND_NDRANGE_KERNEL done\n"); fflush(stdout);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
       pocl_ndrange_node_cleanup(node);
       break;
@@ -1023,6 +1026,7 @@ pocl_exec_command (_cl_command_node * volatile node)
       POCL_ABORT_UNIMPLEMENTED("");
       break;
     }   
+  printf("[GPU Debug] pocl_mem_manager_free_command\n");
   pocl_mem_manager_free_command (node);
 }
 
@@ -1628,6 +1632,7 @@ pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
   pocl_SHA1_Init (&hash_ctx);
 
   char *n = program->kernel_meta[kernel_i].name;
+  printf("Kernel name: %d\n", n); fflush(stdout);
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
                     sizeof (SHA1_digest_t));
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));

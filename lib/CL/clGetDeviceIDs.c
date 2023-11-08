@@ -36,6 +36,8 @@ POname(clGetDeviceIDs)(cl_platform_id   platform,
   int devices_added = 0;
   cl_platform_id tmp_platform;
 
+  printf("[GPU Debug] clGetDeviceIDs called.\n");
+
   /* TODO: OpenCL API specification allows implementation dependent
      behaviour if platform == NULL. Should we just allow it? */
   POCL_RETURN_ERROR_COND((platform == NULL), CL_INVALID_PLATFORM);

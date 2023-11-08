@@ -146,9 +146,11 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
         }
       else
 #endif
+      printf("[GPU Debug] Checking pocl binary\n"); fflush(stdout);
       /* Poclcc binary */
       if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
+          printf("[GPU Debug] after check binary\n"); fflush(stdout);
           program->pocl_binary_sizes[i] = lengths[i];
           program->pocl_binaries[i] = (unsigned char*) malloc (lengths[i]);
           memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
@@ -170,6 +172,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       /* Unknown binary */
       else
         {
+          printf("[GPU Debug] Could not recognize binary\n"); fflush(stdout);
           POCL_MSG_ERR ("Could not recognize binary\n");
           if (binary_status != NULL)
             binary_status[i] = CL_INVALID_BINARY;

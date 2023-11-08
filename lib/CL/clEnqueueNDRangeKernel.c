@@ -613,6 +613,8 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
     }
 
   pocl_command_enqueue (command_queue, command_node);
+
+  printf("[GPU Debug] pocl_command_enqueue done"); fflush(stdout);
   errcode = CL_SUCCESS;
 
 ERROR:

@@ -548,7 +548,9 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   POCL_UNLOCK_OBJ (command_queue);
 
   POCL_LOCK_OBJ (node->event);
+  printf("[GPU Debug] pocl_update_event_queued begin\n"); fflush(stdout);
   pocl_update_event_queued (node->event);
+  printf("[GPU Debug] command_queue->device->ops->submit begin\n"); fflush(stdout);
   command_queue->device->ops->submit(node, command_queue);
   /* node->event is unlocked by device_ops->submit */
 

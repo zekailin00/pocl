@@ -195,6 +195,7 @@ pocl_get_device_type_count(cl_device_type device_type)
 
   int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
 
+  printf("[GPU Debug] pocl_num_devices: %d\n", pocl_num_devices);
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if (!offline_compile && (pocl_devices[i].available != CL_TRUE))

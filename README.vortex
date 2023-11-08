@@ -106,15 +106,21 @@ CC=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops/bin/riscv32-unknown
 pk path
 /home/zekailin00/Desktop/riscv-pk/drops/riscv32-unknown-elf/bin
 
+spike --isa=rv32gc  /home/zekailin00/Desktop/riscv-pk/drops/riscv32-unknown-elf/bin/pk sample
 
 0x80000000 - 0xffffffff
 all memory
 
-- mkdir build_rt_spike
-- cd build_rt_spike
-- export RISCV_TOOLCHAIN_PATH=/home/zekailin00/Desktop/vortex/riscv-gnu-toolchain/drops
-- export POCL_RT_PATH=$PWD/../pocl_rt_spike_drops
-- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/driver/stub/include
-- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/driver/stub/libvortex.a
+# compile with march and mabi:
+# $ ./configure --prefix=/home/zekailin00/Desktop/riscv-gnu-toolchain-linux/drops-ilp32 --with-arch=rv32gc --with-abi=ilp32
+
+- mkdir build_rt_spike_ilp32d_elf_old
+- cd build_rt_spike_ilp32d_elf_old
+- export RISCV_TOOLCHAIN_PATH=/home/zekailin00/Desktop/riscv-gnu-toolchain-old/drops-32
+- export POCL_RT_PATH=$PWD/../pocl_rt_spike_drops_ilp32d_elf_old
+# - export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/driver/stub/include
+# - export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/driver/stub/libvortex.a
+- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/driver/include
+- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/driver/socket/libvortex.a
 - cmake -G Ninja -DENABLE_HOST_CPU_DEVICES=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE=../RISCV_vortex.cmake -DHOST_DEVICE_BUILD_HASH=riscv32-unknown-unknown-elf -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DVORTEX_DRIVER_INC=$VORTEX_DRIVER_INC -DVORTEX_DRIVER_LIB=$VORTEX_DRIVER_LIB -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
 - cmake --build . --target install

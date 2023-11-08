@@ -240,13 +240,19 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
 
   pocl_init_cpu_device_infos(device);
 
+  printf("[GPU Debug] pocl_vortex_init, err: %d\n", err);
+
   err = pocl_topology_detect_device_info(device);
   if (err != 0)
     return CL_INVALID_DEVICE;
 
+  printf("[GPU Debug] pocl_vortex_init, pocl_topology_detect_device_info err: %d\n", err);
+
   d = (struct vx_device_data_t *)calloc(1, sizeof(struct vx_device_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
+  
+  printf("[GPU Debug] pocl_vortex_init, calloc err: %d\n", err);
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device); 
@@ -266,6 +272,7 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
 
   err = vx_dev_open(&vx_device);
   if (err != 0) {
+    printf("[GPU Debug] pocl_vortex_init, vx_dev_open err: %d\n", err);
     free(d);
     return CL_DEVICE_NOT_FOUND;
   }
@@ -280,6 +287,7 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
   // error: cannot convert 'size_t*' {aka 'unsigned int*'} to 'uint64_t*' {aka 'long long unsigned int*'}
   err = vx_mem_alloc(vx_device, print_buf_dev_size, &vx_print_buf_d);
   if (err != 0) {
+    printf("[GPU Debug] pocl_vortex_init, vx_mem_alloc err: %d\n", err);
     vx_dev_close(vx_device);
     free(d);
     return CL_INVALID_DEVICE;
@@ -288,6 +296,7 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
   vx_buffer_h vx_print_buf_h;
   err = vx_buf_alloc(vx_device, print_buf_dev_size, &vx_print_buf_h);
   if (err != 0) {
+    printf("[GPU Debug] pocl_vortex_init, vx_buf_alloc err: %d\n", err);
     vx_dev_close(vx_device);
     free(d);
     return CL_OUT_OF_HOST_MEMORY;
@@ -298,6 +307,7 @@ cl_int pocl_vortex_init(unsigned j, cl_device_id device,
   memset(staging_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
   err = vx_copy_to_dev(vx_print_buf_h, vx_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
   if (err != 0) {
+    printf("[GPU Debug] pocl_vortex_init, vx_copy_to_dev err: %d\n", err);
     vx_buf_free(vx_print_buf_h);
     vx_dev_close(vx_device);
     free(d);
@@ -439,13 +449,18 @@ void pocl_vortex_free(cl_device_id device, cl_mem memobj) {
 static void vortex_command_scheduler(struct vx_device_data_t *d) {
   _cl_command_node *node;
 
+  printf("[GPU Debug] vortex_command_scheduler\n"); fflush(stdout);
+
   /* execute commands from ready list */
   while ((node = d->ready_list)) {
+    printf("[GPU Debug] node = d->ready_list\n"); fflush(stdout);
     assert(pocl_command_is_ready(node->event));
     assert(node->event->status == CL_SUBMITTED);
     CDL_DELETE(d->ready_list, node);
     POCL_UNLOCK(d->cq_lock);
+    printf("[GPU Debug] pocl_exec_command\n"); fflush(stdout);
     pocl_exec_command(node);
+    printf("[GPU Debug] pocl_exec_command done\n"); fflush(stdout);
     POCL_LOCK(d->cq_lock);
   }
 
@@ -460,10 +475,12 @@ void pocl_vortex_submit(_cl_command_node *node, cl_command_queue cq) {
 
   node->ready = 1;
   POCL_LOCK(d->cq_lock);
+  printf("[GPU Debug] Pushing command\n"); fflush(stdout);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
   POCL_UNLOCK_OBJ(node->event);
   vortex_command_scheduler(d);
+  printf("[GPU Debug] vortex_command_scheduler done\n"); fflush(stdout);
   POCL_UNLOCK(d->cq_lock);
 
   return;
@@ -590,6 +607,8 @@ void pocl_vortex_run(void *data, _cl_command_node *cmd) {
   }
   assert(abuf_size <= 0xffff);
 
+  printf("[GPU Debug] vx_buf_alloc\n"); fflush(stdout);
+
   // allocate kernel arguments buffer
   vx_buffer_h staging_buf;
   err = vx_buf_alloc(d->vx_device, abuf_size, &staging_buf);
@@ -597,8 +616,11 @@ void pocl_vortex_run(void *data, _cl_command_node *cmd) {
 
   // update kernel arguments buffer
   {
+    printf("[GPU Debug] vx_host_ptr\n"); fflush(stdout);
     auto abuf_ptr = (uint8_t*)vx_host_ptr(staging_buf);
     assert(abuf_ptr);
+
+    printf("[GPU Debug] write context data\n"); fflush(stdout);
 
     // write context data
     {
@@ -618,6 +640,7 @@ void pocl_vortex_run(void *data, _cl_command_node *cmd) {
       print_data("*** ctx=", abuf_ptr, ALIGNED_CTX_SIZE);
     }
 
+    printf("[GPU Debug] write arguments \n"); fflush(stdout);
     // write arguments    
     uint32_t args_base_addr = KERNEL_ARG_BASE_ADDR;
     uint32_t args_addr = args_base_addr + ALIGNED_CTX_SIZE + abuf_args_size;
@@ -665,10 +688,12 @@ void pocl_vortex_run(void *data, _cl_command_node *cmd) {
       }
     }
 
+    printf("[GPU Debug] vx_copy_to_dev \n"); fflush(stdout);
     // upload kernel arguments buffer
     err = vx_copy_to_dev(staging_buf, args_base_addr, abuf_size, 0);
     assert(0 == err);
 
+    printf("[GPU Debug] vx_buf_free \n"); fflush(stdout);
     // release staging buffer
     err = vx_buf_free(staging_buf);
     assert(0 == err);
@@ -679,32 +704,38 @@ void pocl_vortex_run(void *data, _cl_command_node *cmd) {
        d->current_kernel = kernel;
       char program_bin_path[POCL_FILENAME_LENGTH];
       pocl_cache_final_binary_path (program_bin_path, program, dev_i, kernel, NULL, 0);
+      printf("[GPU Debug] vx_upload_kernel_file: %s \n", program_bin_path); fflush(stdout);
       err = vx_upload_kernel_file(d->vx_device, program_bin_path);      
       assert(0 == err);
     }
   }
     
+  printf("[GPU Debug] vx_start\n"); fflush(stdout);
   // quick off kernel execution
   err = vx_start(d->vx_device);
   assert(0 == err);
 
+  printf("[GPU Debug] vx_ready_wait\n"); fflush(stdout);
   // wait for the execution to complete
   err = vx_ready_wait(d->vx_device, -1);
   assert(0 == err);
 
   // flush print buffer 
   {
+    printf("[GPU Debug] vx_host_ptr\n"); fflush(stdout);
     auto print_ptr = (uint8_t*)vx_host_ptr(d->vx_print_buf_h);
     err = vx_copy_from_dev(d->vx_print_buf_h, d->vx_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
     assert(0 == err);
     uint32_t print_size = *(uint32_t*)(print_ptr + PRINT_BUFFER_SIZE);
     if (print_size != 0) {
+      printf("[GPU Debug] vx_copy_from_dev\n"); fflush(stdout);
       err = vx_copy_from_dev(d->vx_print_buf_h, d->vx_print_buf_d, print_size, 0);
       assert(0 == err);      
       
       write (STDOUT_FILENO, print_ptr, print_size);
       
       memset(print_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
+      printf("[GPU Debug] vx_copy_to_dev\n"); fflush(stdout);
       err = vx_copy_to_dev(d->vx_print_buf_h, d->vx_print_buf_d, sizeof(uint32_t), PRINT_BUFFER_SIZE);
       assert(0 == err);
     }

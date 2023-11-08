@@ -266,10 +266,26 @@ pocl_topology_detect_device_info (cl_device_id device)
   return 0;
 }
 
-#elif (defined(BUILD_VORTEX_NEWLIB) || defined(BUILD_NEWLIB)) && !defined(OCS_AVAILABLE)
+#elif defined(BUILD_NEWLIB) && !defined(OCS_AVAILABLE)
 
 int pocl_topology_detect_device_info (cl_device_id device) {
   //TODO: use global stub functions to set device hw info
+  return 0;
+}
+
+#elif defined(BUILD_VORTEX_NEWLIB)
+
+int pocl_topology_detect_device_info (cl_device_id device) {
+
+  device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+  device->global_mem_cache_type = 0x2;
+
+  // Copied the values from newlib.cc driver
+  // Running on spike
+  device->global_mem_size = 2 * MIN_MAX_MEM_ALLOC_SIZE;
+  device->global_mem_cache_size = 1;
+  device->max_compute_units = 1;
   return 0;
 }
 

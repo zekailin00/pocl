@@ -201,7 +201,7 @@ typedef struct pocl_binary_s
 static unsigned char*
 read_header(pocl_binary *b, const unsigned char *buffer)
 {
-#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
+#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
   memset(b, 0, sizeof(pocl_binary));
   memcpy(b->pocl_id, buffer, POCLCC_STRING_ID_LENGTH);
   buffer += POCLCC_STRING_ID_LENGTH;
@@ -444,7 +444,8 @@ deserialize_file (unsigned char* buffer,
                   char* basedir,
                   size_t offset)
 {
-#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
+#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
+
   unsigned char* orig_buffer = buffer;
   size_t len;
 
@@ -469,7 +470,8 @@ deserialize_file (unsigned char* buffer,
   if (!pocl_exists (dirpath))
     pocl_mkdir_p (dirpath);
   free (dir);
-
+  printf("[GPU Debug] pocl write file: %s\n", fullpath); fflush(stdout);
+  printf("[GPU Debug] pocl write file length: %d\n", len); fflush(stdout);
   pocl_write_file (fullpath, content, len, 0, 0);
 
 RET:
@@ -517,7 +519,7 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
                                             pocl_kernel_metadata_t *meta,
                                             char *basedir)
 {
-#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
+#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
   unsigned i;
   unsigned char *buffer = *buf;
   uint64_t *dynarg_sizes;
@@ -681,6 +683,7 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 cl_int
 pocl_binary_deserialize(cl_program program, unsigned device_i)
 {
+  printf("[GPU Debug] binary deserialize\n"); fflush(stdout);
   unsigned char *buffer = program->pocl_binaries[device_i];
   size_t sizeof_buffer = program->pocl_binary_sizes[device_i];
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
@@ -697,6 +700,7 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   char basedir[POCL_FILENAME_LENGTH];
   
 #if defined(CROSS_COMPILATION)  
+  printf("[GPU Debug] pocl num kernels: %d\n", b.num_kernels); fflush(stdout);
   for (i = 0; i < b.num_kernels; i++) {
     pocl_cache_program_path (basedir, program, device_i);
     size_t basedir_len = strlen (basedir);
@@ -769,7 +773,7 @@ pocl_binary_sizeof_binary(cl_program program, unsigned device_i)
 cl_int
 pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
 {
-#if defined(OCS_AVAILABLE) || (!defined(BUILD_NEWLIB) && !defined(BUILD_VORTEX_NEWLIB))
+#if defined(OCS_AVAILABLE) || !defined(BUILD_NEWLIB)
   unsigned char *binary = program->pocl_binaries[device_i];
   cl_device_id device = program->devices[device_i];
   unsigned j;
@@ -779,6 +783,7 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
   pocl_binary_kernel k;
   memset(&k, 0, sizeof (pocl_binary_kernel));
 
+  printf("[GPU Debug] read header\n"); fflush(stdout);
   unsigned char* buffer = read_header (&b, binary);
   POCL_RETURN_ERROR_ON ((!pocl_binary_check_binary (device, binary)),
                         CL_INVALID_PROGRAM,
@@ -817,12 +822,12 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
   for (j = 0; j < b.num_kernels; j++)
     {
       pocl_kernel_metadata_t *km = &program->kernel_meta[j];
-
+      printf("[GPU Debug] pocl_binary_deserialize_kernel_from_buffer\n"); fflush(stdout);
       POCL_RETURN_ERROR_ON (pocl_binary_deserialize_kernel_from_buffer (
                                  &b, &buffer, &k, km, NULL),
                             CL_INVALID_PROGRAM,
                             "Can't deserialize kernel %u \n", j);
-
+      printf("[GPU Debug] setup meta data\n"); fflush(stdout);
       km->num_args = k.num_args;
       km->num_locals = k.num_locals;
       km->local_sizes = k.local_sizes;

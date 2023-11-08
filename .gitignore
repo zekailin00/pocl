@@ -5,6 +5,10 @@ drops_riscv_cc/**
 drops_riscv_rt/**
 pocl_rt_drops/**
 pocl_rt_spike_drops/**
+pocl_rt_spike_drops_ilp32d_elf_old/**
+pocl_rt_spike_drops_ilp32d_elf/**
+pocl_rt_spike_drops_ilp32d/**
+pocl_rt_spike_drops_ilp32/**
 **.so
 
 **/.deps

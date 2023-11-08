@@ -704,6 +704,7 @@ compile_and_link_program(int compile_program,
         }
       else if (program->pocl_binaries[device_i])
         {
+          printf("[GPU Debug] It is a pocl binary\n"); fflush(stdout);
           POCL_MSG_PRINT_INFO("having a poclbinary for device %d\n", device_i);
 #ifdef OCS_AVAILABLE
           if (program->binaries[device_i] == NULL)
@@ -858,6 +859,7 @@ compile_and_link_program(int compile_program,
             {
               program->kernel_meta = calloc (program->num_kernels,
                                              sizeof (pocl_kernel_metadata_t));
+              printf("[GPU Debug] pocl_binary_get_kernels_metadata\n"); fflush(stdout);
               pocl_binary_get_kernels_metadata (program, device_i);
             }
           break;
@@ -867,19 +869,23 @@ compile_and_link_program(int compile_program,
   POCL_GOTO_ERROR_ON ((device_i >= program->num_devices), CL_INVALID_BINARY,
                       "Couldn't find kernel metadata in the built program\n");
 
+  printf("[GPU Debug] build pocl binary\n"); fflush(stdout);
   /* calculate device-specific kernel hashes. */
   for (j = 0; j < program->num_kernels; ++j)
     {
+      printf("[GPU Debug] Calculate kernel hash: %d\n", j); fflush(stdout);
       program->kernel_meta[j].build_hash
           = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
 
       if (program->builtin_kernel_names == NULL)
         for (device_i = 0; device_i < program->num_devices; device_i++)
           {
+            printf("[GPU Debug] Calculate hash for device: %d\n", device_i); fflush(stdout);
             pocl_calculate_kernel_hash (program, j, device_i);
           }
     }
 
+  printf("[GPU Debug] build pocl success\n"); fflush(stdout);
   errcode = CL_SUCCESS;
   goto FINISH;
 
@@ -904,6 +910,7 @@ ERROR_CLEAN_OPTIONS:
   program->build_status = CL_BUILD_ERROR;
 
 FINISH:
+  printf("[GPU Debug] build pocl finish\n"); fflush(stdout);
   POCL_UNLOCK_OBJ (program);
   POCL_MEM_FREE (unique_devlist);
 
