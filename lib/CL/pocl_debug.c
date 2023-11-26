@@ -32,7 +32,7 @@ static pocl_lock_t console_mutex = POCL_LOCK_INITIALIZER;
     void
     pocl_debug_messages_setup (const char* debug)
     {
-      pocl_debug_messages_filter = 0xfffffff;
+      pocl_debug_messages_filter = 0;
       if (strlen (debug) == 1)
         {
           if (debug[0] == '1')

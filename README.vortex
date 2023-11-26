@@ -82,15 +82,26 @@ Call Stack (most recent call first):
 
 - mkdir build_cc
 - cd build_cc
-- export POCL_CC_PATH=/opt/pocl/compiler
+- export POCL_CC_PATH=$PWD/../pocl_compiler_drops
+- export LLVM_VORTEX=/home/zekailin00/Desktop/vortex/prebuilt-compiler/llvm10/llvm-riscv
 - cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$POCL_CC_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=ON -DWITH_LLVM_CONFIG=$LLVM_VORTEX/bin/llvm-config -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
 - cmake --build . --target install
 
+## runtime for chipyard vortex rtl sim
 - mkdir build_rt
 - cd build_rt
 - export POCL_RT_PATH=$PWD/../pocl_rt_drops
-- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/pocl/lib/CL/devices/vortex/driver/
-- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/pocl/lib/CL/devices/vortex/driver/libvortex.so
+- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/vortex-socket/driver/include/
+- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/vortex-socket/driver/stub/libvortex.so
+- cmake -G Ninja -DHOST_DEVICE_BUILD_HASH=riscv32-unknown-unknown-elf -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DVORTEX_DRIVER_INC=$VORTEX_DRIVER_INC -DVORTEX_DRIVER_LIB=$VORTEX_DRIVER_LIB -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
+- cmake --build . --target install
+
+## runtime for x86 socket sim
+- mkdir build_rt_socket
+- cd build_rt_socket
+- export POCL_RT_PATH=$PWD/../pocl_rt_socket_drops
+- export VORTEX_DRIVER_INC=/home/zekailin00/Desktop/vortex/vortex-socket/driver/include/
+- export VORTEX_DRIVER_LIB=/home/zekailin00/Desktop/vortex/vortex-socket/driver/socketsim/libvortex.so
 - cmake -G Ninja -DHOST_DEVICE_BUILD_HASH=riscv32-unknown-unknown-elf -DCMAKE_INSTALL_PREFIX=$POCL_RT_PATH -DCMAKE_BUILD_TYPE=Debug -DOCS_AVAILABLE=OFF -DVORTEX_DRIVER_INC=$VORTEX_DRIVER_INC -DVORTEX_DRIVER_LIB=$VORTEX_DRIVER_LIB -DENABLE_VORTEX=ON -DBUILD_TESTS=OFF -DPOCL_DEBUG_MESSAGES=ON -DENABLE_ICD=OFF ..
 - cmake --build . --target install
 
